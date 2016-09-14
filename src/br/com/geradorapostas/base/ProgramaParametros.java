@@ -53,11 +53,12 @@ public class ProgramaParametros {
 
 	public static ProgramaParametros obterParametros(String[] args) throws IllegalArgumentException {
         
+		CommandLine commandLine;
 		Options options = criarCmdOptions(args);
 		
 		try {
 			CommandLineParser parser = new DefaultParser();
-			CommandLine commandLine = parser.parse(options, args);
+			commandLine = parser.parse(options, args);
 		} catch (ParseException e) {
 			mostrarHelp(options);
 			return null;
@@ -136,59 +137,67 @@ public class ProgramaParametros {
         return parametrosEntrada;
     }
 	
+	// Cria o objeto Options que contém as opções que estarão disponíveis para uso  
+	
 	private static Options criarCmdOptions(String[] args) {
 		
 		Options options = new Options();
 		
-		StringBuilder descricao = new StringBuilder();
+		StringBuilder descricao = new StringBuilder();		
+		
+		// Opção modalidade
 		
 		descricao.append("Sigla da modalidade de loteria que será utilizada. Siglas válidas:\n");
 		
 		for (Modalidade modalidade : Modalidade.obterModalidades()) {
-			descricao.append(String.format("%-2s para %s\n", modalidade.getSigla(), modalidade.getDescricao()));
+			descricao.append(String.format("%-2s - %s\n", modalidade.getSigla(), modalidade.getDescricao()));
 		}
 		
 		Option opt = Option.builder("md")
-				.longOpt("modalidade")
 				.hasArg()
-				.argName("SIGLA")
+				.argName("sigla")
 				.desc(descricao.toString())
 				.required()
 				.build();
 		options.addOption(opt);
 		
-		opt = new Option("ae", "atuest", false, "Atualiza a base de estatísticas dos números.");
+		// Opção Atualiza as estatísticas
+		
+		opt = new Option("ae", "Atualiza a base de estatísticas dos números.");
 		options.addOption(opt);
 		
+		// Opção Arquivo Sorteios
+		
 		opt = Option.builder("as")
-					.longOpt("arq-sorteios")
 					.hasArg()
-					.argName("N")
-					.desc("Arquivo fornecido pela caixa com os dados dos sorteios realizados.\n Somente quando for atualizar estatísticas.")
+					.argName("nome_arquivo")
+					.desc("Arquivo fornecido pela caixa com os dados dos sorteios realizados. Somente quando for atualizar estatísticas.")
 					.build();
 		options.addOption(opt);
 		
+		// Opção Gerador
+		
 		opt = Option.builder("g")
-				.longOpt("gerador")
 				.hasArg()
-				.argName("GERADOR")
+				.argName("gerador")
 				.desc("Gerador a ser utilizado ao criar as apostas")
 				.build();
 		options.addOption(opt);
 		
+		// Opção Quantidade de Apostas
 		
 		opt = Option.builder("qa")
-				.longOpt("qtde-apostas")
 				.hasArg()
-				.argName("N")
+				.argName("n")
 				.desc("Quantidade de Apostas para serem geradas. Padrão: 1")
 				.build();
 		options.addOption(opt);
 		
+		// Opção Quantidade de Números
+		
 		opt = Option.builder("qn")
-				.longOpt("qtde-num")
 				.hasArg()
-				.argName("N")
+				.argName("n")
 				.desc("Quantidade de Números para serem geradas. Padrão: Mínimo da modalidade.")
 				.build();
 		options.addOption(opt);
