@@ -13,6 +13,8 @@ import br.com.geradorapostas.gerador.GerenciadorProcessamento;
 import java.io.IOException;
 import java.util.List;
 
+import org.apache.commons.cli.ParseException;
+
 /**
  *
  * @author usuario
@@ -26,7 +28,9 @@ public class Main {
             // Valida os parâmetros fornecidos
             
             ProgramaParametros parametros = ProgramaParametros.obterParametros(args);
-            
+
+            return;
+ /*           
             System.out.printf("\n");
             System.out.printf("-------------------------------------\n");
             System.out.printf("-- GERADOR DE APOSTAS RECOMENDADAS --\n");
@@ -59,12 +63,14 @@ public class Main {
             // Gerar arquivo com as apostas geradas
             
             System.out.printf("3. Gerando arquivo contendo as apostas geradas\n");
-            GeradorArquivoApostas.gerarArquivoApostas(apostasGeradas, parametros.getNomeArquivoApostas());
-            System.out.printf(" => Arquivo '%s' criado.\n", parametros.getNomeArquivoApostas());
+//            GeradorArquivoApostas.gerarArquivoApostas(apostasGeradas, parametros.getNomeArquivoApostas());
+//            System.out.printf(" => Arquivo '%s' criado.\n", parametros.getNomeArquivoApostas());
+ * 
+ */
             
         } 
-        catch (IllegalArgumentException | IOException | IllegalStateException ex) {
-            System.err.printf(ex.getMessage());
+        catch (IllegalArgumentException | IllegalStateException ex) {
+        	System.err.printf(ex.getMessage());
         }
         
     }

@@ -9,6 +9,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+
 /**
  *
  * @author usuario
@@ -18,26 +26,48 @@ public class ProgramaParametros {
     private static final String NOME_ARQUIVO_SORTEIOS      = "sorteios.txt";
     private static final String NOME_ARQUIVO_APOSTAS_REC   = "apostas-geradas.txt";
     
-    private final Modalidade modalidade; 
-    private final Integer qtdeApostas; 
-    private final Integer qtdeNumerosAposta;
-    private final String nomeArquivoApostas;
-    private final String nomeArquivoSorteios;
-
-    public ProgramaParametros(Modalidade modalidade, Integer qtdeApostas, Integer qtdeNumerosAposta, String nomeArquivoApostas, String nomeArquivoSorteios) {
-        this.modalidade = modalidade;
-        this.qtdeApostas = qtdeApostas;
-        this.qtdeNumerosAposta = qtdeNumerosAposta;
-        this.nomeArquivoApostas = nomeArquivoApostas;
-        this.nomeArquivoSorteios = nomeArquivoSorteios;
-    }
+    // Parametros para atualização das estatísticas
     
-    public static ProgramaParametros obterParametros(String[] args) throws IllegalArgumentException {
+    private final Boolean atualizarEstatisticas;
+    private final String nomeArquivoSorteios;
+    
+    // Parametros para geração de apostas
+    
+    private final Modalidade modalidade;
+    private final String geradorAposta;
+    private final Integer qtdeApostas;
+    private final Integer qtdeNumerosAposta;
+    
+    
+
+	public ProgramaParametros(Boolean atualizarEstatisticas, String nomeArquivoSorteios, Modalidade modalidade,
+			String geradorAposta, Integer qtdeApostas, Integer qtdeNumerosAposta) {
+		super();
+		this.atualizarEstatisticas = atualizarEstatisticas;
+		this.nomeArquivoSorteios = nomeArquivoSorteios;
+		this.modalidade = modalidade;
+		this.geradorAposta = geradorAposta;
+		this.qtdeApostas = qtdeApostas;
+		this.qtdeNumerosAposta = qtdeNumerosAposta;
+	}
+
+	public static ProgramaParametros obterParametros(String[] args) throws IllegalArgumentException {
         
-        // Verifica se possui pelo menos o parâmetro de modalidade
+		Options options = criarCmdOptions(args);
+		
+		try {
+			CommandLineParser parser = new DefaultParser();
+			CommandLine commandLine = parser.parse(options, args);
+		} catch (ParseException e) {
+			mostrarHelp(options);
+			return null;
+		}
+		
+        // Verifica se possui pelo menos um parametro
         
-        if (args.length < 1) {
-            throw new IllegalArgumentException(obterMensagemErroStr());
+        if (args.length <= 0) {
+            mostrarHelp(options);
+            return null;
         }
         
         // Se passou uma modalidade, verifica se é válida
@@ -99,11 +129,80 @@ public class ProgramaParametros {
             }
         }
         
-        ProgramaParametros parametrosEntrada = new ProgramaParametros(modalidadeSelec, qtdeApostas, qtdeNumeroApostas, nomeArquivoApostas, nomeArquivoSorteios);
+        
+        
+        ProgramaParametros parametrosEntrada = null;
         
         return parametrosEntrada;
     }
-    
+	
+	private static Options criarCmdOptions(String[] args) {
+		
+		Options options = new Options();
+		
+		StringBuilder descricao = new StringBuilder();
+		
+		descricao.append("Sigla da modalidade de loteria que será utilizada. Siglas válidas:\n");
+		
+		for (Modalidade modalidade : Modalidade.obterModalidades()) {
+			descricao.append(String.format("%-2s para %s\n", modalidade.getSigla(), modalidade.getDescricao()));
+		}
+		
+		Option opt = Option.builder("md")
+				.longOpt("modalidade")
+				.hasArg()
+				.argName("SIGLA")
+				.desc(descricao.toString())
+				.required()
+				.build();
+		options.addOption(opt);
+		
+		opt = new Option("ae", "atuest", false, "Atualiza a base de estatísticas dos números.");
+		options.addOption(opt);
+		
+		opt = Option.builder("as")
+					.longOpt("arq-sorteios")
+					.hasArg()
+					.argName("N")
+					.desc("Arquivo fornecido pela caixa com os dados dos sorteios realizados.\n Somente quando for atualizar estatísticas.")
+					.build();
+		options.addOption(opt);
+		
+		opt = Option.builder("g")
+				.longOpt("gerador")
+				.hasArg()
+				.argName("GERADOR")
+				.desc("Gerador a ser utilizado ao criar as apostas")
+				.build();
+		options.addOption(opt);
+		
+		
+		opt = Option.builder("qa")
+				.longOpt("qtde-apostas")
+				.hasArg()
+				.argName("N")
+				.desc("Quantidade de Apostas para serem geradas. Padrão: 1")
+				.build();
+		options.addOption(opt);
+		
+		opt = Option.builder("qn")
+				.longOpt("qtde-num")
+				.hasArg()
+				.argName("N")
+				.desc("Quantidade de Números para serem geradas. Padrão: Mínimo da modalidade.")
+				.build();
+		options.addOption(opt);
+		
+		return options;
+	}
+	
+	private static void mostrarHelp(Options options) {
+        HelpFormatter helpFormatter = new HelpFormatter();
+        helpFormatter.setOptionComparator(null);
+        helpFormatter.printHelp("gerador-apostas", options, true);
+	}
+	
+	
     private static String obterMensagemErroStr() {
         StringBuilder mensagemErro = new StringBuilder();
         
@@ -135,20 +234,4 @@ public class ProgramaParametros {
         return qtdeNumerosAposta;
     }
 
-    public String getNomeArquivoApostas() {
-        return nomeArquivoApostas;
-    }
-
-    public String getNomeArquivoSorteios() {
-        return nomeArquivoSorteios;
-    }
-    
-
-    
-
-
-    
-    
-    
-    
 }
