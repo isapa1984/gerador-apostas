@@ -5,15 +5,7 @@
  */
 package br.com.geradorapostas;
 
-import br.com.geradorapostas.base.SorteioRealizado;
-import br.com.geradorapostas.base.Aposta;
 import br.com.geradorapostas.base.ProgramaParametros;
-import br.com.geradorapostas.gerador.GeradorArquivoApostas;
-import br.com.geradorapostas.gerador.GerenciadorProcessamento;
-import java.io.IOException;
-import java.util.List;
-
-import org.apache.commons.cli.ParseException;
 
 /**
  *
@@ -27,7 +19,9 @@ public class Main {
             
             // Valida os parâmetros fornecidos
             
-            ProgramaParametros parametros = ProgramaParametros.obterParametros(args);
+        	args = new String[]{"-h"};
+        	
+        	ProgramaParametros parametros = ProgramaParametros.obterParametros(args);
 
             return;
  /*           

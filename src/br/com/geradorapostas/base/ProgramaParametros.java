@@ -5,16 +5,19 @@
  */
 package br.com.geradorapostas.base;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.Map;
 
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Option;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
+import joptsimple.HelpFormatter;
+import joptsimple.OptionDescriptor;
+import joptsimple.OptionException;
+import joptsimple.OptionParser;
+import joptsimple.OptionSet;
+import joptsimple.OptionSpec;
+import joptsimple.ValueConversionException;
+import joptsimple.ValueConverter;
 
 /**
  *
@@ -25,7 +28,7 @@ public class ProgramaParametros {
 	// Parametros para atualização das estatísticas
 
 	private final Boolean atualizarEstatisticas;
-	private final String nomeArquivoSorteios;
+	private final File arquivoSorteios;
 
 	// Parametros para geração de apostas
 
@@ -34,11 +37,10 @@ public class ProgramaParametros {
 	private final Integer qtdeApostas;
 	private final Integer qtdeNumerosAposta;
 
-	public ProgramaParametros(Boolean atualizarEstatisticas, String nomeArquivoSorteios, Modalidade modalidade,
+	public ProgramaParametros(Boolean atualizarEstatisticas, File arquivoSorteios, Modalidade modalidade,
 			String geradorAposta, Integer qtdeApostas, Integer qtdeNumerosAposta) {
-		super();
 		this.atualizarEstatisticas = atualizarEstatisticas;
-		this.nomeArquivoSorteios = nomeArquivoSorteios;
+		this.arquivoSorteios = arquivoSorteios;
 		this.modalidade = modalidade;
 		this.geradorAposta = geradorAposta;
 		this.qtdeApostas = qtdeApostas;
@@ -46,176 +48,261 @@ public class ProgramaParametros {
 	}
 
 	public static ProgramaParametros obterParametros(String[] args) throws IllegalArgumentException {
-
+		
 		ProgramaParametros parametrosEntrada = null;
-		CommandLine commandLine;
-		Options options = criarCmdOptions(args);
-
-		// Verifica se possui pelo menos um parametro
-
-		if (args.length <= 0) {
-			throw new IllegalArgumentException(
-					"Nenhum parâmetro passado. Utilize a opção -h para saber os parâmetros disponíveis.");
-		}
-
-		// Obtém os parâmetros passados para o programa
-
-		try {
-			CommandLineParser parser = new DefaultParser();
-			commandLine = parser.parse(options, args);
-
-			// Mostra o help se a opção -h foi solicitada
-
-			if (commandLine.hasOption("h")) {
-				HelpFormatter helpFormatter = new HelpFormatter();
-				helpFormatter.setOptionComparator(null);
-				helpFormatter.printHelp("gerador-apostas", options, true);
-				return null;
-			}
-
-			// Se passou uma modalidade, verifica se é válida
-
-			List<String> opcoesModalidade = new ArrayList<>();
-
-			List<Modalidade> modalidades = Modalidade.obterModalidades();
-
-			for (Modalidade modalidade : modalidades) {
-				opcoesModalidade.add(modalidade.getSigla());
-			}
-
-			String siglaModalidadeParam = commandLine.getOptionValue("md");
-
-			if (!opcoesModalidade.contains(siglaModalidadeParam)) {
-				throw new IllegalArgumentException("Sigla inválida. Utilize a opção -h para siglas disponíveis.");
-			}
-
-			Modalidade modalidadeSelec = Modalidade.obterModalidadePorSigla(siglaModalidadeParam);
-
-			// Se foi solicitado a atualização das estatísticas
-
-			String nomeArquivoSorteios = null;
-
-			if (commandLine.hasOption("ae")) {
-
-				if (!commandLine.hasOption("as")) {
-					throw new IllegalArgumentException(
-							"Arquivo com os sorteios realizados não encontrado ou fornecido.");
-				}
-
-				nomeArquivoSorteios = commandLine.getOptionValue("as", "sorteios.html");
-
-				parametrosEntrada = new ProgramaParametros(true, nomeArquivoSorteios, null, null, null, null);
-			} else {
-				// Verifica as outras opções se necessário
-
-				String geradorApostasSigla = commandLine.getOptionValue("g", "hist");
-
-				Integer qtdeApostas = (Integer) commandLine.getParsedOptionValue("qa");
-				if (qtdeApostas == 0) {
-					qtdeApostas = 1;
-				}
-
-				Integer qtdeNumerosAposta = (Integer) commandLine.getParsedOptionValue("qn");
-				if (qtdeNumerosAposta == 0) {
-					qtdeNumerosAposta = modalidadeSelec.getQtdeMinMarcacao();
-				}
-
-				parametrosEntrada = new ProgramaParametros(false, null, modalidadeSelec, geradorApostasSigla,
-						qtdeApostas, qtdeNumerosAposta);
-			}
-		} catch (ParseException e) {
-			throw new IllegalArgumentException("Erro ao ler os parâmetros. Mensagem: " + e.getMessage());
-		}
-
-		return parametrosEntrada;
-	}
-
-	// Cria o objeto Options que contém as opções que estarão disponíveis para
-	// uso
-
-	private static Options criarCmdOptions(String[] args) {
-
-		Options options = new Options();
-
-		// Opção help
-
-		Option opt = new Option("h", "Mostra este help.");
-		options.addOption(opt);
-
-		// Opção modalidade
+		
+		// Prepara a estrutura para reconhecimento das opções do programa
+		
+		OptionParser optionParser = new OptionParser(false);
+		
+		// Define a estrutura do help
+		
+		optionParser.formatHelpWith(new GeradorApostasHelpFormatter());
+		
+		// Define as opções que serão disponibilizadas 
+		
+		// Opção Help
+		
+		optionParser.accepts("h","Mostra este help").forHelp();
+		
+		// Opção Modalidade 
+		
+		String argName = "MODALIDADE";
 		
 		StringBuilder descricao = new StringBuilder();
 
-		descricao.append("Sigla da modalidade de loteria que será utilizada. Siglas válidas:\n");
+		descricao.append("Sigla da modalidade de loteria que será utilizada definida em " + argName + ". Siglas válidas: ");
 
+		descricao.append("(");
+		
 		for (Modalidade modalidade : Modalidade.obterModalidades()) {
-			descricao.append(String.format("%-2s - %s\n", modalidade.getSigla(), modalidade.getDescricao()));
+			descricao.append(String.format("%s=%s ", modalidade.getSigla(), modalidade.getDescricao()));
 		}
-
-		opt = Option.builder("md").hasArg().argName("sigla").desc(descricao.toString()).build();
-		options.addOption(opt);
-
+		
+		descricao.append(")");
+		
+		OptionSpec<Modalidade> optModalidade = optionParser
+				.accepts("md", descricao.toString())
+				.withRequiredArg()
+				.describedAs(argName)
+				.withValuesConvertedBy(new ModalidadeConverter())
+				.required();
+		
 		// Opção Atualiza as estatísticas
 
-		opt = new Option("ae", "Atualiza a base de estatísticas dos números.");
-		options.addOption(opt);
-
-		// Opção Arquivo Sorteios
-
-		opt = Option.builder("as").hasArg().argName("nome_arquivo")
-				.desc("Arquivo fornecido pela caixa com os dados dos sorteios realizados. Somente quando for atualizar estatísticas. Padrão: sorteios.html")
-				.build();
-		options.addOption(opt);
-
+		argName = "ARQUIVO_SORTEIO";
+		
+		OptionSpec<File> optAtualizarEstats = optionParser
+				.accepts("ae", "Sinaliza para atualizar o banco de estatísticas da modalidade selecionada a partir dos sorteios contidos em " + argName + ".")
+				.withRequiredArg()
+				.describedAs(argName)
+				.ofType(File.class)
+				.defaultsTo(new File("sorteios.html"));
+		
 		// Opção Gerador
+		
+		argName = "GERADOR";
 
-		opt = Option.builder("g").hasArg().argName("gerador").desc("Gerador a ser utilizado ao criar as apostas")
-				.build();
-		options.addOption(opt);
+		OptionSpec<String> optGerador = optionParser
+				.accepts("g", "Gerador a ser utilizado ao criar as apostas definido por " + argName + ".")
+				.availableUnless("ae")
+				.withRequiredArg()
+				.describedAs(argName)
+				.ofType(String.class)
+				.defaultsTo("hist");
 
 		// Opção Quantidade de Apostas
+		
+		argName = "QTDE_APOSTAS";
 
-		opt = Option.builder("qa").hasArg().argName("n").desc("Quantidade de Apostas para serem geradas. Padrão: 1")
-				.type(Integer.class).build();
-		options.addOption(opt);
+		OptionSpec<Integer> optQtdeApostas = optionParser
+				.accepts("qa", "Quantidade de Apostas para serem geradas definidos em " + argName + ".")
+				.availableUnless("ae")
+				.withRequiredArg()
+				.describedAs(argName)
+				.ofType(Integer.class)
+				.defaultsTo(1);
 
 		// Opção Quantidade de Números
+		
+		argName = "QTDE_NUMEROS";
 
-		opt = Option.builder("qn").hasArg().argName("n")
-				.desc("Quantidade de Números para serem geradas. Padrão: Mínimo da modalidade.").type(Integer.class)
-				.build();
-		options.addOption(opt);
+		OptionSpec<Integer> optQtdeNumerosAposta = optionParser
+				.accepts("qn", "Quantidade de Números por apostas definido em " + argName + ". Padrão: Mínimo da modalidade.")
+				.availableUnless("ae")
+				.withRequiredArg()
+				.describedAs(argName)
+				.ofType(Integer.class);
+		
+		try {
+			// Realiza o reconhecimento das opções fornecidas
+			
+			OptionSet optionSet = optionParser.parse(args);
+			
+			// Imprime o help quando solicitado
+			
+			if (optionSet.has("h")) {
+				optionParser.printHelpOn(System.out);
+				return null;
+			}
+			
+			// Obtém a modalidade
 
-		return options;
+			Modalidade modalidade = optModalidade.value(optionSet);
+			
+			// Se for pra atualizar as estatísticas, obtém o arquivo com os sorteios realizados  
+			
+			if (optionSet.has(optAtualizarEstats)) {
+				File arquivoSorteios = optAtualizarEstats.value(optionSet);
+				
+				if (!arquivoSorteios.exists()) {
+					throw new FileNotFoundException("O Arquivo de sorteios fornecido não existe.");
+				}
+				
+				parametrosEntrada = new ProgramaParametros(true, arquivoSorteios, modalidade, null, null, null);
+			}
+			else {
+				parametrosEntrada = new ProgramaParametros(false, null, modalidade, optGerador.value(optionSet), optQtdeApostas.value(optionSet), optQtdeNumerosAposta.value(optionSet));
+			}
+		} 
+		catch (OptionException | IOException e) {
+			
+			StringBuilder mensagem = new StringBuilder();
+			
+			mensagem.append("ERRO: ");
+			
+			if (e.getCause() != null) {
+				mensagem.append(e.getCause().getMessage());
+			}
+			else {
+				mensagem.append(e.getMessage());
+			}
+			
+			mensagem.append(" (Utilize a opção -h para opções disponíveis.)");
+			
+			throw new IllegalArgumentException(mensagem.toString());
+		}
+		
+		return parametrosEntrada;
 	}
 	
-	private static Options criarCmdHelpOptions(String[] args) {
+	private static final class ModalidadeConverter implements ValueConverter<Modalidade> {
 
-		Options options = new Options();
+		@Override
+		public Modalidade convert(String value) {
+			Modalidade modalidade = Modalidade.obterModalidadePorSigla(value);
+			
+			if (modalidade == null) {
+				throw new ValueConversionException("Sigla inválida para modalidade.");
+			}
+			
+			return modalidade;
+		}
 
-		// Opção help
+		@Override
+		public String valuePattern() {
+			return null;
+		}
 
-		Option opt = new Option("h", "Mostra este help.");
-		options.addOption(opt);
-
-		return options;
+		@Override
+		public Class<? extends Modalidade> valueType() {
+			return Modalidade.class;
+		}
+		
 	}
 	
+	private static final class GeradorApostasHelpFormatter implements HelpFormatter {
 
-	private static void mostrarHelp(Options options) {
-		HelpFormatter helpFormatter = new HelpFormatter();
-		helpFormatter.setOptionComparator(null);
-		helpFormatter.printHelp("gerador-apostas", options, true);
+		@Override
+		public String format(Map<String, ? extends OptionDescriptor> options) {
+			
+			StringBuilder textoHelp = new StringBuilder();
+			
+			// Monta o texto do uso do programa
+			
+			textoHelp.append("Uso \n");
+			textoHelp.append("  gerador-apostas ");
+			
+			for (Map.Entry<String, ? extends OptionDescriptor> entry : options.entrySet()) {
+				
+				String opcao = entry.getKey();
+				OptionDescriptor optionDescriptor = entry.getValue();
+				
+				if (opcao.contains("arguments")) {
+					continue;
+				}
+				
+				if (!optionDescriptor.isRequired()) {
+					textoHelp.append("[");
+				}
+				
+				textoHelp.append("-");
+				textoHelp.append(opcao);
+				
+				if (optionDescriptor.acceptsArguments()) {
+					textoHelp.append(" ");
+					textoHelp.append(optionDescriptor.argumentDescription());
+				}
+				
+				if (!optionDescriptor.isRequired()) {
+					textoHelp.append("]");
+				}
+				
+				textoHelp.append(" ");
+			}
+
+			textoHelp.append("\n\n");
+			
+			// Monta o texto explicando cada opção
+			
+			for (Map.Entry<String, ? extends OptionDescriptor> entry : options.entrySet()) {
+				
+				String opcao = entry.getKey();
+				OptionDescriptor optionDescriptor = entry.getValue();
+				
+				if (opcao.contains("arguments")) {
+					continue;
+				}
+				
+				textoHelp.append("-");
+				textoHelp.append(opcao);
+				textoHelp.append("\t");				
+				textoHelp.append(optionDescriptor.description());
+				
+				if (!optionDescriptor.defaultValues().isEmpty()) {
+					textoHelp.append(" ");				
+					textoHelp.append("Padrão: ");
+					textoHelp.append(optionDescriptor.defaultValues().toString());
+				}
+
+//				if (optionDescriptor.acceptsArguments()) {
+//					textoHelp.append(" ");
+//					textoHelp.append("Argumento: ");
+//					textoHelp.append(optionDescriptor.argumentDescription());
+//					
+//					if (!optionDescriptor.defaultValues().isEmpty()) {
+//						textoHelp.append(", ");
+//						textoHelp.append("Valor Padrão: ");
+//						textoHelp.append(optionDescriptor.defaultValues().toString());
+//					}
+//				}
+				
+				textoHelp.append("\n");
+			}
+			
+			return textoHelp.toString();
+		}
 	}
 
+	
 	public Boolean getAtualizarEstatisticas() {
 		return atualizarEstatisticas;
 	}
 
-	public String getNomeArquivoSorteios() {
-		return nomeArquivoSorteios;
+	public File getArquivoSorteios() {
+		return arquivoSorteios;
 	}
-
+	
 	public Modalidade getModalidade() {
 		return modalidade;
 	}
