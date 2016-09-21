@@ -6,7 +6,6 @@
 package br.com.geradorapostas.base;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Map;
 
@@ -94,7 +93,7 @@ public class ProgramaParametros {
 		
 		OptionSpec<File> optAtualizarEstats = optionParser
 				.accepts("ae", "Sinaliza para atualizar o banco de estatísticas da modalidade selecionada a partir dos sorteios contidos em " + argName + ".")
-				.withRequiredArg()
+				.withOptionalArg()
 				.describedAs(argName)
 				.ofType(File.class)
 				.defaultsTo(new File("sorteios.html"));
@@ -153,13 +152,7 @@ public class ProgramaParametros {
 			// Se for pra atualizar as estatísticas, obtém o arquivo com os sorteios realizados  
 			
 			if (optionSet.has(optAtualizarEstats)) {
-				File arquivoSorteios = optAtualizarEstats.value(optionSet);
-				
-				if (!arquivoSorteios.exists()) {
-					throw new FileNotFoundException("O Arquivo de sorteios fornecido não existe.");
-				}
-				
-				parametrosEntrada = new ProgramaParametros(true, arquivoSorteios, modalidade, null, null, null);
+				parametrosEntrada = new ProgramaParametros(true, optAtualizarEstats.value(optionSet), modalidade, null, null, null);
 			}
 			else {
 				parametrosEntrada = new ProgramaParametros(false, null, modalidade, optGerador.value(optionSet), optQtdeApostas.value(optionSet), optQtdeNumerosAposta.value(optionSet));
@@ -169,13 +162,11 @@ public class ProgramaParametros {
 			
 			StringBuilder mensagem = new StringBuilder();
 			
-			mensagem.append("ERRO: ");
-			
 			if (e.getCause() != null) {
-				mensagem.append(e.getCause().getMessage());
+				mensagem.append(e.getCause().getLocalizedMessage());
 			}
 			else {
-				mensagem.append(e.getMessage());
+				mensagem.append(e.getLocalizedMessage());
 			}
 			
 			mensagem.append(" (Utilize a opção -h para opções disponíveis.)");
@@ -295,7 +286,7 @@ public class ProgramaParametros {
 	}
 
 	
-	public Boolean getAtualizarEstatisticas() {
+	public Boolean isAtualizarEstatisticas() {
 		return atualizarEstatisticas;
 	}
 

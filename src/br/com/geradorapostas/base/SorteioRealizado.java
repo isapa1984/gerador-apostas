@@ -5,15 +5,18 @@
  */
 package br.com.geradorapostas.base;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.Serializable;
-import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
+
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 /**
  *
@@ -24,10 +27,10 @@ import java.util.List;
 public class SorteioRealizado implements Serializable {
     
     private final Integer       numConcurso;
-    private final String        dataRealizacao;
+    private final Date        	dataRealizacao;
     private final List<Integer> numerosSorteados;
 
-    public SorteioRealizado(Integer numConcurso, String dataRealizacao, List<Integer> numerosSorteados) {
+    public SorteioRealizado(Integer numConcurso, Date dataRealizacao, List<Integer> numerosSorteados) {
         this.numConcurso = numConcurso;
         this.dataRealizacao = dataRealizacao;
         this.numerosSorteados = numerosSorteados;
@@ -37,7 +40,7 @@ public class SorteioRealizado implements Serializable {
         return numConcurso;
     }
 
-    public String getDataRealizacao() {
+    public Date getDataRealizacao() {
         return dataRealizacao;
     }
     
@@ -45,43 +48,30 @@ public class SorteioRealizado implements Serializable {
         return numerosSorteados;
     }
     
-    public static List<SorteioRealizado> obterSorteiosRealizados(String nomeArquivo) 
-            throws FileNotFoundException, IOException {
-        
-        File arquivo = new File(nomeArquivo);
+    public static List<SorteioRealizado> obterSorteiosRealizados(File arquivo) 
+            throws IOException {
         
         ArrayList<SorteioRealizado> sorteios = new ArrayList<>();
         
         if (arquivo.exists()) {
             
-            try (BufferedReader reader = Files.newBufferedReader(arquivo.toPath())) {
-                String linha;
-                
-                while ((linha = reader.readLine()) != null) {                    
-                    
-                    String[] itensLinha = linha.split(" ");
-                    
-                    Integer numConcurso = Integer.parseInt(itensLinha[0]);
-                    String dataRealizacao = itensLinha[1];
-                    
-                    ArrayList<Integer> numeros = new ArrayList<>();                    
-                    
-                    String[] strNumeros = Arrays.copyOfRange(itensLinha, 2, itensLinha.length);                    
-                    
-                    for (String strNumero : strNumeros) {
-                        numeros.add(Integer.parseInt(strNumero));
-                    }
-                    
-                    SorteioRealizado sorteioRealizado = new SorteioRealizado(numConcurso, dataRealizacao, numeros);
-                    sorteios.add(sorteioRealizado);
-                }
-            } 
-            catch (IOException ioe) {
-                throw ioe;
-            }
+        	Document htmlDoc = Jsoup.parse(arquivo, null);
+        	
+        	Elements trElements = htmlDoc.select("tr:has(td)");
+        	
+        	for (int i = 0; i < 3; i++) {
+        		Element tr = trElements.get(i);
+        		System.out.println("-----------------------------------------");
+        		System.out.println(tr.html());
+			}
+        	
+//        	for (Element trElement : trElements) {
+//        		System.out.println(trElement.html());
+//			}
+
         }
         else {
-            throw new FileNotFoundException(String.format("Arquivo \"%s\" não encontrado!", nomeArquivo));
+            throw new FileNotFoundException(String.format("Arquivo \"%s\" não encontrado!", arquivo.getName()));
         }
         
         return sorteios;

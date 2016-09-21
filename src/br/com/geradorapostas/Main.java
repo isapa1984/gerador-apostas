@@ -5,7 +5,10 @@
  */
 package br.com.geradorapostas;
 
+import java.io.IOException;
+
 import br.com.geradorapostas.base.ProgramaParametros;
+import br.com.geradorapostas.base.SorteioRealizado;
 
 /**
  *
@@ -19,11 +22,18 @@ public class Main {
             
             // Valida os parâmetros fornecidos
             
-        	args = new String[]{"-h"};
+        	args = new String[] {"-md=ms","-ae=d_megasc.htm"};
         	
         	ProgramaParametros parametros = ProgramaParametros.obterParametros(args);
-
-            return;
+        	
+        	if (parametros.isAtualizarEstatisticas()) {
+				SorteioRealizado.obterSorteiosRealizados(parametros.getArquivoSorteios());
+			}
+        	else {
+        		// Gera as apostas 
+        	}
+        	
+        	return;
  /*           
             System.out.printf("\n");
             System.out.printf("-------------------------------------\n");
@@ -63,7 +73,7 @@ public class Main {
  */
             
         } 
-        catch (IllegalArgumentException | IllegalStateException ex) {
+        catch (IllegalArgumentException | IllegalStateException | IOException ex) {
         	System.err.printf(ex.getMessage());
         }
         
