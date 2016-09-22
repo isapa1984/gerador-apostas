@@ -9,6 +9,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.Serializable;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -31,25 +33,15 @@ public class SorteioRealizado implements Serializable {
     private final List<Integer> numerosSorteados;
 
     public SorteioRealizado(Integer numConcurso, Date dataRealizacao, List<Integer> numerosSorteados) {
-        this.numConcurso = numConcurso;
-        this.dataRealizacao = dataRealizacao;
-        this.numerosSorteados = numerosSorteados;
+        this.numConcurso 		= numConcurso;
+        this.dataRealizacao 	= dataRealizacao;
+        this.numerosSorteados 	= numerosSorteados;
     }
 
-    public Integer getNumConcurso() {
-        return numConcurso;
-    }
-
-    public Date getDataRealizacao() {
-        return dataRealizacao;
-    }
+    // Obtém os sorteios realizados para modalidade oriundos dos arquivos disponibilizados pela Caixa
     
-    public List<Integer> getNumerosSorteados() {
-        return numerosSorteados;
-    }
-    
-    public static List<SorteioRealizado> obterSorteiosRealizados(File arquivo) 
-            throws IOException {
+    public static List<SorteioRealizado> obterSorteiosRealizados(Modalidade modalidade, File arquivo) 
+            throws IOException, ParseException {
         
         ArrayList<SorteioRealizado> sorteios = new ArrayList<>();
         
@@ -59,15 +51,26 @@ public class SorteioRealizado implements Serializable {
         	
         	Elements trElements = htmlDoc.select("tr:has(td)");
         	
-        	for (int i = 0; i < 3; i++) {
-        		Element tr = trElements.get(i);
-        		System.out.println("-----------------------------------------");
-        		System.out.println(tr.html());
+        	for (Element trElement : trElements) {
+        		
+        		Elements tdElements = trElement.children();
+        		
+        		if (tdElements.size() < 6) {
+					continue;
+				}
+        		
+        		Integer numConcurso 				= Integer.parseInt(tdElements.get(0).text());
+        		Date dataRealizacao 				= new SimpleDateFormat("dd/MM/yyyy").parse(tdElements.get(1).text());
+        		ArrayList<Integer> numerosSorteados = new ArrayList<>();
+        		
+        		for (int i = 1, j = 2; i <= modalidade.getQtdeMinMarcacao(); i++, j++) {
+					numerosSorteados.add(Integer.parseInt(tdElements.get(j).text()));
+				}
+        		
+//        		System.out.println("-------------");
+        		
+        		sorteios.add(new SorteioRealizado(numConcurso, dataRealizacao, numerosSorteados));
 			}
-        	
-//        	for (Element trElement : trElements) {
-//        		System.out.println(trElement.html());
-//			}
 
         }
         else {
@@ -76,7 +79,26 @@ public class SorteioRealizado implements Serializable {
         
         return sorteios;
     }
-
     
+    public Integer getNumConcurso() {
+    	return numConcurso;
+    }
     
+    public Date getDataRealizacao() {
+    	return dataRealizacao;
+    }
+    
+    public List<Integer> getNumerosSorteados() {
+    	return numerosSorteados;
+    }
+    
+    @Override
+    public String toString() {
+    	return String.format(
+    			"Concurso: %d, Data: %s, Números: %s", 
+    			this.numConcurso, 
+    			new SimpleDateFormat("dd/MM/yyyy").format(this.dataRealizacao), 
+    			this.numerosSorteados
+    	);
+    }
 }
