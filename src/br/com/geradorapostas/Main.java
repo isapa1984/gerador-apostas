@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.util.List;
 
+import br.com.geradorapostas.base.Modalidade;
 import br.com.geradorapostas.base.ProgramaParametros;
 import br.com.geradorapostas.base.SorteioRealizado;
 
@@ -29,11 +30,7 @@ public class Main {
         	ProgramaParametros parametros = ProgramaParametros.obterParametros(args);
         	
         	if (parametros.isAtualizarEstatisticas()) {
-				List<SorteioRealizado> sorteios = SorteioRealizado.obterSorteiosRealizados(parametros.getModalidade(), parametros.getArquivoSorteios());
-				
-				for (SorteioRealizado sorteioRealizado : sorteios) {
-					System.out.println(sorteioRealizado);
-				}
+        		// Atualiza as estatísticas
 			}
         	else {
         		// Gera as apostas 
@@ -79,7 +76,7 @@ public class Main {
  */
             
         } 
-        catch (IllegalArgumentException | IllegalStateException | IOException | ParseException ex) {
+        catch (IllegalArgumentException | IllegalStateException ex) {
         	System.err.printf(ex.getMessage());
         }
         

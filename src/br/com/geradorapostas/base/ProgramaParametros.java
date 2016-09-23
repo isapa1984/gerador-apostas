@@ -266,18 +266,6 @@ public class ProgramaParametros {
 					textoHelp.append(optionDescriptor.defaultValues().toString());
 				}
 
-//				if (optionDescriptor.acceptsArguments()) {
-//					textoHelp.append(" ");
-//					textoHelp.append("Argumento: ");
-//					textoHelp.append(optionDescriptor.argumentDescription());
-//					
-//					if (!optionDescriptor.defaultValues().isEmpty()) {
-//						textoHelp.append(", ");
-//						textoHelp.append("Valor Padrão: ");
-//						textoHelp.append(optionDescriptor.defaultValues().toString());
-//					}
-//				}
-				
 				textoHelp.append("\n");
 			}
 			

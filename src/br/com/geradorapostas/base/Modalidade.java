@@ -5,12 +5,18 @@
  */
 package br.com.geradorapostas.base;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-import java.io.InputStreamReader;
 import java.io.Serializable;
-import java.lang.reflect.Type;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
+
+import br.com.geradorapostas.util.bd.GerenciadorConexaoBD;
+import br.com.geradorapostas.util.bd.InstrucaoSQL;
 
 /**
  *
@@ -37,23 +43,74 @@ public class Modalidade implements Serializable {
     }
     
     public static List<Modalidade> obterModalidades() {
-        InputStreamReader reader = new InputStreamReader(Modalidade.class.getResourceAsStream("modalidades.json"));
-        Type type = new TypeToken<List<Modalidade>>(){}.getType();
-        Gson gson = new Gson();
-        List<Modalidade> modalidades = gson.fromJson(reader, type);
+        
+    	List<Modalidade> modalidades = new ArrayList<>();
+    	
+		try {
+			Connection conexaoBD = GerenciadorConexaoBD.getConexao();
+			PreparedStatement stModTodas = conexaoBD.prepareStatement(InstrucaoSQL.getInstrucao("modalidades.todas"));
+			
+			ResultSet rs = stModTodas.executeQuery();
+			
+			while (rs.next()) {
+				
+				List<String> acertosStr = Arrays.asList(rs.getString("acertos_premiacao").split("\\s*,\\s*"));
+				
+				List<Integer> acertosPremiacao = acertosStr.stream().map(Integer::parseInt).collect(Collectors.toList());
+				
+				Modalidade modalidade = new Modalidade(
+						rs.getString("sigla"), 
+						rs.getString("descricao"), 
+						rs.getInt("qtde_min_marcacao"),
+						rs.getInt("qtde_max_marcacao"),
+						rs.getInt("min_numero"),
+						rs.getInt("max_numero"),
+						acertosPremiacao
+				);
+				
+				modalidades.add(modalidade);
+			}
+			
+		} catch (ClassNotFoundException | SQLException e) {
+			e.printStackTrace();
+		}
+        
         return modalidades;
     }
     
     public static Modalidade obterModalidadePorSigla(String sigla) {
-        List<Modalidade> modalidades = Modalidade.obterModalidades();
+
+    	Modalidade modalidade = null;
         
-        for (Modalidade modalidade : modalidades) {
-            if (modalidade.getSigla().equals(sigla)) {
-                return modalidade;
-            }
-        }
+		try {
+			Connection conexaoBD = GerenciadorConexaoBD.getConexao();
+			PreparedStatement stModPorSigla = conexaoBD.prepareStatement(InstrucaoSQL.getInstrucao("modalidades.por_sigla"));
+			
+			stModPorSigla.setString(1, sigla);
+			ResultSet rs = stModPorSigla.executeQuery();
+			
+			while (rs.next()) {
+				
+				List<String> acertosStr = Arrays.asList(rs.getString("acertos_premiacao").split("\\s*,\\s*"));
+				
+				List<Integer> acertosPremiacao = acertosStr.stream().map(Integer::parseInt).collect(Collectors.toList());
+				
+				modalidade = new Modalidade(
+						rs.getString("sigla"), 
+						rs.getString("descricao"), 
+						rs.getInt("qtde_min_marcacao"),
+						rs.getInt("qtde_max_marcacao"),
+						rs.getInt("min_numero"),
+						rs.getInt("max_numero"),
+						acertosPremiacao
+				);
+			}
+			
+		} catch (ClassNotFoundException | SQLException e) {
+			e.printStackTrace();
+		}
         
-        return null;
+        return modalidade;
     }
 
     public String getSigla() {
@@ -82,5 +139,10 @@ public class Modalidade implements Serializable {
 
     public List<Integer> getAcertosPremiacao() {
         return acertosPremiacao;
+    }
+    
+    @Override
+    public String toString() {
+    	return this.descricao;
     }
 }
