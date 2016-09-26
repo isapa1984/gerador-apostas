@@ -24,6 +24,7 @@ import br.com.geradorapostas.util.bd.InstrucaoSQL;
  */
 @SuppressWarnings("serial")
 public class Modalidade implements Serializable {
+    private final Integer id;
     private final String sigla;
     private final String descricao;
     private final Integer qtdeMinMarcacao;
@@ -32,7 +33,8 @@ public class Modalidade implements Serializable {
     private final Integer maxNumero;
     private final List<Integer> acertosPremiacao;
 
-    public Modalidade(String sigla, String descricao, Integer qtdeMinMarcacao, Integer qtdeMaxMarcacao, Integer minNumero, Integer maxNumero, List<Integer> acertosPremiacao) {
+    public Modalidade(Integer id, String sigla, String descricao, Integer qtdeMinMarcacao, Integer qtdeMaxMarcacao, Integer minNumero, Integer maxNumero, List<Integer> acertosPremiacao) {
+        this.id              	= id;
         this.sigla              = sigla;
         this.descricao          = descricao;
         this.qtdeMinMarcacao    = qtdeMinMarcacao;
@@ -42,13 +44,12 @@ public class Modalidade implements Serializable {
         this.acertosPremiacao   = acertosPremiacao;
     }
     
-    public static List<Modalidade> obterModalidades() {
+    public static List<Modalidade> obterModalidades() throws ClassNotFoundException, SQLException {
         
     	List<Modalidade> modalidades = new ArrayList<>();
     	
-		try {
 			Connection conexaoBD = GerenciadorConexaoBD.getConexao();
-			PreparedStatement stModTodas = conexaoBD.prepareStatement(InstrucaoSQL.getInstrucao("modalidades.todas"));
+			PreparedStatement stModTodas = conexaoBD.prepareStatement(InstrucaoSQL.getInstrucao("modalidades.select.todas"));
 			
 			ResultSet rs = stModTodas.executeQuery();
 			
@@ -59,6 +60,7 @@ public class Modalidade implements Serializable {
 				List<Integer> acertosPremiacao = acertosStr.stream().map(Integer::parseInt).collect(Collectors.toList());
 				
 				Modalidade modalidade = new Modalidade(
+						rs.getInt("id"), 
 						rs.getString("sigla"), 
 						rs.getString("descricao"), 
 						rs.getInt("qtde_min_marcacao"),
@@ -70,21 +72,16 @@ public class Modalidade implements Serializable {
 				
 				modalidades.add(modalidade);
 			}
-			
-		} catch (ClassNotFoundException | SQLException e) {
-			e.printStackTrace();
-		}
-        
+
         return modalidades;
     }
     
-    public static Modalidade obterModalidadePorSigla(String sigla) {
+    public static Modalidade obterModalidadePorSigla(String sigla) throws SQLException, ClassNotFoundException {
 
     	Modalidade modalidade = null;
         
-		try {
 			Connection conexaoBD = GerenciadorConexaoBD.getConexao();
-			PreparedStatement stModPorSigla = conexaoBD.prepareStatement(InstrucaoSQL.getInstrucao("modalidades.por_sigla"));
+			PreparedStatement stModPorSigla = conexaoBD.prepareStatement(InstrucaoSQL.getInstrucao("modalidades.select.por_sigla"));
 			
 			stModPorSigla.setString(1, sigla);
 			ResultSet rs = stModPorSigla.executeQuery();
@@ -96,6 +93,7 @@ public class Modalidade implements Serializable {
 				List<Integer> acertosPremiacao = acertosStr.stream().map(Integer::parseInt).collect(Collectors.toList());
 				
 				modalidade = new Modalidade(
+						rs.getInt("id"), 
 						rs.getString("sigla"), 
 						rs.getString("descricao"), 
 						rs.getInt("qtde_min_marcacao"),
@@ -106,13 +104,13 @@ public class Modalidade implements Serializable {
 				);
 			}
 			
-		} catch (ClassNotFoundException | SQLException e) {
-			e.printStackTrace();
-		}
-        
         return modalidade;
     }
 
+    public Integer getId() {
+		return id;
+	}
+    
     public String getSigla() {
         return sigla;
     }

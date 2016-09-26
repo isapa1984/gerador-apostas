@@ -24,7 +24,7 @@ public class GerenciadorConexaoBD {
 		return conexao;
 	}
 	
-	public static void fecharConexao(Connection conexao) {
+	public static void fecharConexao() {
 		try {
 			if ((conexao != null) && (!conexao.isClosed()))  {
 				conexao.close();

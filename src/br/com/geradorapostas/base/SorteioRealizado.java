@@ -40,42 +40,12 @@ public class SorteioRealizado implements Serializable {
 
     // Obtém os sorteios realizados para modalidade oriundos dos arquivos disponibilizados pela Caixa
     
-    public static List<SorteioRealizado> obterSorteiosRealizados(Modalidade modalidade, File arquivo) 
+    public static List<SorteioRealizado> obterSorteiosRealizados(Modalidade modalidade) 
             throws IOException, ParseException {
         
         ArrayList<SorteioRealizado> sorteios = new ArrayList<>();
         
-        if (arquivo.exists()) {
-            
-        	Document htmlDoc = Jsoup.parse(arquivo, null);
-        	
-        	Elements trElements = htmlDoc.select("tr:has(td)");
-        	
-        	for (Element trElement : trElements) {
-        		
-        		Elements tdElements = trElement.children();
-        		
-        		if (tdElements.size() < 6) {
-					continue;
-				}
-        		
-        		Integer numConcurso 				= Integer.parseInt(tdElements.get(0).text());
-        		Date dataRealizacao 				= new SimpleDateFormat("dd/MM/yyyy").parse(tdElements.get(1).text());
-        		ArrayList<Integer> numerosSorteados = new ArrayList<>();
-        		
-        		for (int i = 1, j = 2; i <= modalidade.getQtdeMinMarcacao(); i++, j++) {
-					numerosSorteados.add(Integer.parseInt(tdElements.get(j).text()));
-				}
-        		
-//        		System.out.println("-------------");
-        		
-        		sorteios.add(new SorteioRealizado(numConcurso, dataRealizacao, numerosSorteados));
-			}
-
-        }
-        else {
-            throw new FileNotFoundException(String.format("Arquivo \"%s\" não encontrado!", arquivo.getName()));
-        }
+       
         
         return sorteios;
     }

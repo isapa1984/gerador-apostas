@@ -6,6 +6,7 @@
 package br.com.geradorapostas;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.text.ParseException;
 import java.util.List;
 
@@ -26,7 +27,7 @@ public class Main {
             // Valida os parâmetros fornecidos
             
         	args = new String[] {"-md=ms","-ae=d_megasc.htm"};
-        	
+        	        	
         	ProgramaParametros parametros = ProgramaParametros.obterParametros(args);
         	
         	if (parametros.isAtualizarEstatisticas()) {
@@ -76,8 +77,8 @@ public class Main {
  */
             
         } 
-        catch (IllegalArgumentException | IllegalStateException ex) {
-        	System.err.printf(ex.getMessage());
+        catch (IllegalArgumentException | IllegalStateException | ClassNotFoundException | SQLException ex) {
+        	ex.printStackTrace();
         }
         
     }
