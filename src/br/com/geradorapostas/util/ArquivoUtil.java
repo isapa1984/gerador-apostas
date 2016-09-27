@@ -16,19 +16,23 @@ import java.io.IOException;
  */
 public class ArquivoUtil {
     
-    public static void escreverEmArquivoTexto(String nomeArquivo, String conteudo) throws IOException {
+    public static void escreverEmArquivoTexto(String nomeArquivo, String conteudo) {
         File arquivoTexto = new File(nomeArquivo);
+        try {
         
-        if (arquivoTexto.exists()) {
-            arquivoTexto.delete();
-        }
+	        if (arquivoTexto.exists()) {
+	            arquivoTexto.delete();
+	        }
         
-        arquivoTexto.createNewFile();
-        
-        FileWriter fileWriter = new FileWriter(arquivoTexto);
-        
-        try (BufferedWriter bufferedWriter = new BufferedWriter(fileWriter)) {
-            bufferedWriter.write(conteudo);
-        }
+			arquivoTexto.createNewFile();
+			FileWriter fileWriter = new FileWriter(arquivoTexto);
+			
+			try (BufferedWriter bufferedWriter = new BufferedWriter(fileWriter)) {
+				bufferedWriter.write(conteudo);
+			}
+		} 
+        catch (IOException e) {
+			e.printStackTrace();
+		}
     }
 }

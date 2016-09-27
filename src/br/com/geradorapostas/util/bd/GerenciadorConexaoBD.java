@@ -10,15 +10,22 @@ public class GerenciadorConexaoBD {
 	
 	private GerenciadorConexaoBD() {}
 	
-	public static Connection getConexao() throws ClassNotFoundException, SQLException {
+	public static Connection getConexao()  {
 		
-		if (conexao == null) {
-
-			// Carrega o driver JDBC 
-			Class.forName("org.sqlite.JDBC");
+		try {
 			
-			// Cria a conexao
-			conexao = DriverManager.getConnection("jdbc:sqlite:bd/gerados_apostas.db");
+			if (conexao == null) {
+			
+				// Carrega o driver JDBC 
+				Class.forName("org.sqlite.JDBC");
+				
+				// Cria a conexao
+				conexao = DriverManager.getConnection("jdbc:sqlite:bd/gerados_apostas.db");
+			}
+			
+		} 
+		catch (ClassNotFoundException | SQLException e) {
+			e.printStackTrace();
 		}
 		
 		return conexao;

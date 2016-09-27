@@ -7,7 +7,6 @@ package br.com.geradorapostas.base;
 
 import java.io.File;
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.Map;
 
 import joptsimple.HelpFormatter;
@@ -47,7 +46,7 @@ public class ProgramaParametros {
 		this.qtdeNumerosAposta = qtdeNumerosAposta;
 	}
 
-	public static ProgramaParametros obterParametros(String[] args) throws IllegalArgumentException, ClassNotFoundException, SQLException {
+	public static ProgramaParametros obterParametros(String[] args) throws IllegalArgumentException {
 		
 		ProgramaParametros parametrosEntrada = null;
 		
@@ -184,11 +183,7 @@ public class ProgramaParametros {
 		public Modalidade convert(String value) {
 			Modalidade modalidade = null;
 			
-			try {
-				modalidade = Modalidade.obterModalidadePorSigla(value);
-			} catch (ClassNotFoundException | SQLException e) {
-				e.printStackTrace();
-			}
+			modalidade = Modalidade.obterModalidadePorSigla(value);
 			
 			if (modalidade == null) {
 				throw new ValueConversionException("Sigla inválida para modalidade.");

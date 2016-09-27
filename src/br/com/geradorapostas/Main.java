@@ -5,14 +5,8 @@
  */
 package br.com.geradorapostas;
 
-import java.io.IOException;
-import java.sql.SQLException;
-import java.text.ParseException;
-import java.util.List;
-
-import br.com.geradorapostas.base.Modalidade;
+import br.com.geradorapostas.base.AtualizadorBD;
 import br.com.geradorapostas.base.ProgramaParametros;
-import br.com.geradorapostas.base.SorteioRealizado;
 
 /**
  *
@@ -32,10 +26,14 @@ public class Main {
         	
         	if (parametros.isAtualizarEstatisticas()) {
         		// Atualiza as estatísticas
+        		AtualizadorBD.atualizarBancoDeDados(parametros.getModalidade(), parametros.getArquivoSorteios());
 			}
         	else {
         		// Gera as apostas 
         	}
+        	
+//        	System.out.println("[1,2,3]".replaceAll("(\\[|\\])", ""));
+        	
         	
         	return;
  /*           
@@ -77,7 +75,7 @@ public class Main {
  */
             
         } 
-        catch (IllegalArgumentException | IllegalStateException | ClassNotFoundException | SQLException ex) {
+        catch (IllegalArgumentException | IllegalStateException ex) {
         	ex.printStackTrace();
         }
         

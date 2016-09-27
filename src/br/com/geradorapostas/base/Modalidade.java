@@ -44,10 +44,11 @@ public class Modalidade implements Serializable {
         this.acertosPremiacao   = acertosPremiacao;
     }
     
-    public static List<Modalidade> obterModalidades() throws ClassNotFoundException, SQLException {
+    public static List<Modalidade> obterModalidades() {
         
     	List<Modalidade> modalidades = new ArrayList<>();
-    	
+  
+		try {
 			Connection conexaoBD = GerenciadorConexaoBD.getConexao();
 			PreparedStatement stModTodas = conexaoBD.prepareStatement(InstrucaoSQL.getInstrucao("modalidades.select.todas"));
 			
@@ -68,18 +69,24 @@ public class Modalidade implements Serializable {
 						rs.getInt("min_numero"),
 						rs.getInt("max_numero"),
 						acertosPremiacao
-				);
+						);
 				
 				modalidades.add(modalidade);
 			}
+		} 
+		catch (SQLException e) {
+			e.printStackTrace();
+		}
 
         return modalidades;
     }
     
-    public static Modalidade obterModalidadePorSigla(String sigla) throws SQLException, ClassNotFoundException {
+    public static Modalidade obterModalidadePorSigla(String sigla) {
 
     	Modalidade modalidade = null;
         
+		
+		try {
 			Connection conexaoBD = GerenciadorConexaoBD.getConexao();
 			PreparedStatement stModPorSigla = conexaoBD.prepareStatement(InstrucaoSQL.getInstrucao("modalidades.select.por_sigla"));
 			
@@ -101,8 +108,12 @@ public class Modalidade implements Serializable {
 						rs.getInt("min_numero"),
 						rs.getInt("max_numero"),
 						acertosPremiacao
-				);
+						);
 			}
+		} 
+		catch (SQLException e) {
+			e.printStackTrace();
+		}
 			
         return modalidade;
     }
