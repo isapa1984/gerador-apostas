@@ -81,10 +81,9 @@ public class Modalidade implements Serializable {
         return modalidades;
     }
     
-    public static Modalidade obterModalidadePorSigla(String sigla) {
+    public static Modalidade obterModalidade(String sigla) {
 
     	Modalidade modalidade = null;
-        
 		
 		try {
 			Connection conexaoBD = GerenciadorConexaoBD.getConexao();
@@ -108,7 +107,7 @@ public class Modalidade implements Serializable {
 						rs.getInt("min_numero"),
 						rs.getInt("max_numero"),
 						acertosPremiacao
-						);
+				);
 			}
 		} 
 		catch (SQLException e) {

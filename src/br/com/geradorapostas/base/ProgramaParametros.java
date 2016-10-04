@@ -183,7 +183,7 @@ public class ProgramaParametros {
 		public Modalidade convert(String value) {
 			Modalidade modalidade = null;
 			
-			modalidade = Modalidade.obterModalidadePorSigla(value);
+			modalidade = Modalidade.obterModalidade(value);
 			
 			if (modalidade == null) {
 				throw new ValueConversionException("Sigla inválida para modalidade.");

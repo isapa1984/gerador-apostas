@@ -99,6 +99,8 @@ public class AtualizadorBD {
 				System.out.printf("  => OK\n");
 				
 				
+				// Atualiza as estatísticas dos números
+				
 				
 				
 				
