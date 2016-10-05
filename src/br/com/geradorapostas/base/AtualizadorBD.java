@@ -37,17 +37,7 @@ public class AtualizadorBD {
 
 			// Obtém o número do último sorteio existente no banco
 			
-			PreparedStatement stNumUltimoSorteio = GerenciadorConexaoBD.getConexao().prepareStatement(InstrucaoSQL.getInstrucao("sorteios_realizados.select.num_ultimo_sorteio"));
-			
-			stNumUltimoSorteio.setInt(1, modalidade.getId());
-			
-			ResultSet rs = stNumUltimoSorteio.executeQuery();
-			
-			Integer numUltimoSorteioBanco = 0;
-			
-			if (rs.next()) {
-				numUltimoSorteioBanco = rs.getInt("num_ultimo_sorteio");
-			}
+			Integer numUltimoSorteioBanco = getNumUltimoSorteio(modalidade);
 			
 			// Atualiza o banco se o numero do último sorteio no banco for menor que o do arquivo
 			
@@ -98,10 +88,9 @@ public class AtualizadorBD {
 				
 				System.out.printf("  => OK\n");
 				
-				
 				// Atualiza as estatísticas dos números
 				
-				
+				EstatisticasNumero estatisticasNumero = EstatisticasNumero.obterEstatisticas(modalidade, 0);
 				
 				
 			}
@@ -113,6 +102,26 @@ public class AtualizadorBD {
 			e.printStackTrace();
 		}
 		
+	}
+	
+	private static Integer getNumUltimoSorteio(Modalidade modalidade) {
+		
+		Integer numUltimoSorteioBanco = 0;
+		
+		try {
+			PreparedStatement stNumUltimoSorteio = GerenciadorConexaoBD.getConexao().prepareStatement(InstrucaoSQL.getInstrucao("sorteios_realizados.select.num_ultimo_sorteio"));
+			stNumUltimoSorteio.setInt(1, modalidade.getId());
+			ResultSet rs = stNumUltimoSorteio.executeQuery();
+			
+			if (rs.next()) {
+				numUltimoSorteioBanco = rs.getInt("num_ultimo_sorteio");
+			}
+			
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		
+		return numUltimoSorteioBanco;
 	}
 	
     private static List<SorteioRealizado> obterSorteiosRealizadosDoArquivo(Modalidade modalidade, File arquivo) {
