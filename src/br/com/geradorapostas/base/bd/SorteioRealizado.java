@@ -3,13 +3,12 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package br.com.geradorapostas.base;
+package br.com.geradorapostas.base.bd;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.Serializable;
-import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -25,9 +24,6 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-
-import br.com.geradorapostas.util.bd.GerenciadorConexaoBD;
-import br.com.geradorapostas.util.bd.InstrucaoSQL;
 
 /**
  *
@@ -56,8 +52,7 @@ public class SorteioRealizado implements Serializable {
 		SorteioRealizado sorteioRealizado = null;
 		
 	   	try (
-    		Connection conexao = GerenciadorConexaoBD.getConexao();
-    		PreparedStatement stNumUltimoSorteio = conexao.prepareStatement(InstrucaoSQL.getInstrucao("sorteios_realizados.select.ultimo_sorteio"));
+    		PreparedStatement stNumUltimoSorteio = GerenciadorConexaoBD.getConexao().prepareStatement(InstrucaoSQL.getInstrucao("sorteios_realizados.select.ultimo_sorteio"));
     	) {
 			
 	   		ResultSet rs = stNumUltimoSorteio.executeQuery();
@@ -90,8 +85,7 @@ public class SorteioRealizado implements Serializable {
         ArrayList<SorteioRealizado> sorteios = new ArrayList<>();
         
 	   	try (
-    		Connection conexao = GerenciadorConexaoBD.getConexao();
-    		PreparedStatement stTodosSorteios = conexao.prepareStatement(InstrucaoSQL.getInstrucao("sorteios_realizados.select.todos"));
+    		PreparedStatement stTodosSorteios = GerenciadorConexaoBD.getConexao().prepareStatement(InstrucaoSQL.getInstrucao("sorteios_realizados.select.todos"));
     	) {
 			
 	   		stTodosSorteios.setInt(1, modalidade.getId());
@@ -167,8 +161,7 @@ public class SorteioRealizado implements Serializable {
     
     public static void inserirSorteios(List<SorteioRealizado> novosSorteios, Boolean mostrarAndamento) {
     	try (
-    		Connection conexao = GerenciadorConexaoBD.getConexao();
-    		PreparedStatement stInsertSorteioReali = conexao.prepareStatement(InstrucaoSQL.getInstrucao("sorteios_realizados.insert.novo_registro"));
+    		PreparedStatement stInsertSorteioReali = GerenciadorConexaoBD.getConexao().prepareStatement(InstrucaoSQL.getInstrucao("sorteios_realizados.insert.novo_registro"));
     	) {
 			
     		Integer ctRegInseridos = 0;

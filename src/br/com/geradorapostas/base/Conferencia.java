@@ -7,6 +7,8 @@ package br.com.geradorapostas.base;
 
 import java.io.Serializable;
 
+import br.com.geradorapostas.base.bd.SorteioRealizado;
+
 /**
  *
  * @author usuario

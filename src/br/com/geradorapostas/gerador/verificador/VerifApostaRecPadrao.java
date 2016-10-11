@@ -7,8 +7,9 @@ package br.com.geradorapostas.gerador.verificador;
 
 import br.com.geradorapostas.base.Aposta;
 import br.com.geradorapostas.base.Conferencia;
-import br.com.geradorapostas.base.Modalidade;
-import br.com.geradorapostas.base.SorteioRealizado;
+import br.com.geradorapostas.base.bd.Modalidade;
+import br.com.geradorapostas.base.bd.SorteioRealizado;
+
 import java.util.List;
 
 /**

@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package br.com.geradorapostas.base;
+package br.com.geradorapostas.base.bd;
 
 import java.io.Serializable;
 import java.sql.Connection;
@@ -14,9 +14,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import br.com.geradorapostas.util.bd.GerenciadorConexaoBD;
-import br.com.geradorapostas.util.bd.InstrucaoSQL;
 
 /**
  *

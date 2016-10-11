@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
+import br.com.geradorapostas.base.bd.Modalidade;
 import joptsimple.HelpFormatter;
 import joptsimple.OptionDescriptor;
 import joptsimple.OptionException;

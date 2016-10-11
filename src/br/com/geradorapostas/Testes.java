@@ -5,7 +5,7 @@
  */
 package br.com.geradorapostas;
 
-import br.com.geradorapostas.base.Modalidade;
+import br.com.geradorapostas.base.bd.Modalidade;
 
 /**
  *

@@ -9,8 +9,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import br.com.geradorapostas.base.Aposta;
-import br.com.geradorapostas.base.Modalidade;
-import br.com.geradorapostas.base.SorteioRealizado;
+import br.com.geradorapostas.base.bd.Modalidade;
+import br.com.geradorapostas.base.bd.SorteioRealizado;
 import br.com.geradorapostas.gerador.verificador.GerenciadorVerifApostasRec;
 import br.com.geradorapostas.gerador.verificador.VerificadorApostaRecomendada;
 

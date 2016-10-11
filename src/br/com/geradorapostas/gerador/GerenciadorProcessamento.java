@@ -6,8 +6,9 @@
 package br.com.geradorapostas.gerador;
 
 import br.com.geradorapostas.base.ProgramaParametros;
+import br.com.geradorapostas.base.bd.SorteioRealizado;
 import br.com.geradorapostas.base.Aposta;
-import br.com.geradorapostas.base.SorteioRealizado;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;

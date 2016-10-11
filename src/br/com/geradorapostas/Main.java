@@ -5,8 +5,9 @@
  */
 package br.com.geradorapostas;
 
-import br.com.geradorapostas.base.AtualizadorBD;
 import br.com.geradorapostas.base.ProgramaParametros;
+import br.com.geradorapostas.base.bd.AtualizadorBD;
+import br.com.geradorapostas.base.bd.GerenciadorConexaoBD;
 
 /**
  *
@@ -29,11 +30,10 @@ public class Main {
         		AtualizadorBD.atualizarBancoDeDados(parametros.getModalidade(), parametros.getArquivoSorteios());
 			}
         	else {
-        		// Gera as apostas 
+        		// Gera as apostas
         	}
         	
 //        	System.out.println("[1,2,3]".replaceAll("(\\[|\\])", ""));
-        	
         	
         	return;
  /*           
@@ -73,7 +73,6 @@ public class Main {
 //            System.out.printf(" => Arquivo '%s' criado.\n", parametros.getNomeArquivoApostas());
  * 
  */
-            
         } 
         catch (IllegalArgumentException | IllegalStateException ex) {
         	ex.printStackTrace();

@@ -1,4 +1,4 @@
-package br.com.geradorapostas.util.bd;
+package br.com.geradorapostas.base.bd;
 
 import java.io.IOException;
 import java.io.InputStream;
