@@ -27,7 +27,7 @@ public class Main {
         	
         	if (parametros.isAtualizarEstatisticas()) {
         		// Atualiza as estatísticas
-        		AtualizadorBD.atualizarBancoDeDados(parametros.getModalidade(), parametros.getArquivoSorteios());
+        		AtualizadorBD.atualizarBancoDeDados(parametros);
 			}
         	else {
         		// Gera as apostas

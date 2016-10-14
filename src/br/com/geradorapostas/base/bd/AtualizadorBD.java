@@ -20,6 +20,8 @@ import br.com.geradorapostas.base.ProgramaParametros;
 
 public class AtualizadorBD {
 	
+	private static final Integer MAX_QTDE_OPERACOES_EM_LOTE = 300;
+	
 	private static final class SorteioArquivo {
 	    private final Integer       numConcurso;
 	    private final String        data;
@@ -188,96 +190,211 @@ public class AtualizadorBD {
 	
 	public static void atualizarBancoDeDados(ProgramaParametros programaParametros) {
 		
-		try (
-			Connection conexao = GerenciadorConexaoBD.getConexao();
-			PreparedStatement stUltimoSorteio = conexao.prepareStatement(InstrucaoSQL.getInstrucao("sorteios_realizados.select.ultimo_sorteio"));
-			PreparedStatement stInsertSorteioReali = conexao.prepareStatement(InstrucaoSQL.getInstrucao("sorteios_realizados.insert.novo_registro"));
-		) {
+		try (Connection conexao = GerenciadorConexaoBD.getConexao()) {
 			
-			// Obtém os sorteios realizados do arquivo fornecido da caixa
-			
-			File arquivoSorteios = programaParametros.getArquivoSorteios();
-			Modalidade modalidade = programaParametros.getModalidade();
-			
-			System.out.printf("=> Obtendo sorteios realizados do arquivo %s...", arquivoSorteios.getName());
-			List<SorteioArquivo> sorteiosArquivo = obterSorteiosDoArquivo(modalidade, arquivoSorteios);
-			System.out.printf("OK\n");
-			
-			// Obtém o número do último sorteio realizado no arquivo
-			
-			Integer numUltimoSorteioArquivo = sorteiosArquivo.get(sorteiosArquivo.size() - 1).getNumConcurso();
-			
-			// Obtém o número do último sorteio existente no banco
-			
-			Integer numUltimoSorteioBanco = 0;
-			
-			ResultSet rsUltimoSorteio = stUltimoSorteio.executeQuery();
-			
-			if (rsUltimoSorteio.next()) {
-				numUltimoSorteioBanco = rsUltimoSorteio.getInt("num_concurso"); 
-			}
-			
-			// Atualiza o banco se o numero do último sorteio no banco for menor que o do arquivo
-			
-			if (numUltimoSorteioBanco < numUltimoSorteioArquivo) {
-				System.out.printf("=> Inserindo os novos sorteios\n");
+			try (
+				PreparedStatement stObterUltimoSorteio 	= conexao.prepareStatement(InstrucaoSQL.getInstrucao("sorteios_realizados.select.ultimo_sorteio"));
+				PreparedStatement stInsertSorteioReali 	= conexao.prepareStatement(InstrucaoSQL.getInstrucao("sorteios_realizados.insert.novo_registro"));
+				PreparedStatement stObterEstatsNumero 	= conexao.prepareStatement(InstrucaoSQL.getInstrucao("estatisticas_numeros.select.estats_numero"));
+				PreparedStatement stInserirEstats 		= conexao.prepareStatement(InstrucaoSQL.getInstrucao("estatisticas_numeros.insert.nova_estatistica"));
+				PreparedStatement stAtualizarEstats 	= conexao.prepareStatement(InstrucaoSQL.getInstrucao("estatisticas_numeros.update.estatistica"));
+			) {
 				
-				// Obtém o índice do próximo sorteio no arquivo após o último
+				// Obtém os sorteios realizados do arquivo fornecido da caixa
 				
-				Integer indInicio = sorteiosArquivo.indexOf(numUltimoSorteioBanco);
+				File arquivoSorteios = programaParametros.getArquivoSorteios();
+				Modalidade modalidade = programaParametros.getModalidade();
 				
-				if (indInicio < 0) {
-					indInicio = 0;
+				System.out.printf("=> Obtendo sorteios realizados do arquivo %s...", arquivoSorteios.getName());
+				List<SorteioArquivo> sorteiosArquivo = obterSorteiosDoArquivo(modalidade, arquivoSorteios);
+				System.out.printf("OK\n");
+				
+				// Obtém o número do último sorteio realizado no arquivo
+				
+				Integer numUltimoSorteioArquivo = sorteiosArquivo.get(sorteiosArquivo.size() - 1).getNumConcurso();
+				
+				// Obtém o número do último sorteio existente no banco
+				
+				Integer numUltimoSorteioBanco = 0;
+				
+				ResultSet rsUltimoSorteio = stObterUltimoSorteio.executeQuery();
+				
+				if (rsUltimoSorteio.next()) {
+					numUltimoSorteioBanco = rsUltimoSorteio.getInt("num_concurso"); 
+				}
+				
+				rsUltimoSorteio.close();
+				
+				// Atualiza o banco se o numero do último sorteio no banco for menor que o do arquivo
+				
+				if (numUltimoSorteioBanco < numUltimoSorteioArquivo) {
+					System.out.printf("=> Inserindo os novos sorteios\n");
+					
+					// Obtém o índice do próximo sorteio no arquivo após o último
+					
+					Integer indInicio = sorteiosArquivo.indexOf(numUltimoSorteioBanco);
+					
+					if (indInicio < 0) {
+						indInicio = 0;
+					}
+					else {
+						indInicio =+ 1;
+					}
+					
+					// Insere os novos sorteios
+					
+					List<SorteioArquivo> novosSorteios = sorteiosArquivo.subList(indInicio, sorteiosArquivo.size());
+					
+					Integer qtdeOperacoesLote 			= 0;
+					Integer contadorSorteioAtual 		= 1;
+					Integer qtdeSorteiosParaProcessar 	= novosSorteios.size();
+					
+					for (SorteioArquivo novoSorteio : novosSorteios) {
+						
+						// Executa o lote de operações caso o mesmo tenha alcançado quantidade esperada 
+						if (qtdeOperacoesLote >= MAX_QTDE_OPERACOES_EM_LOTE) {
+							stInsertSorteioReali.executeBatch();
+							stInserirEstats.executeBatch();
+							stAtualizarEstats.executeBatch();
+							conexao.commit();
+						}
+						
+						System.out.printf("  => Inserindo sorteio do concurso %d, registro %d de %d\n", novoSorteio.getNumConcurso(), contadorSorteioAtual, qtdeSorteiosParaProcessar);
+						
+						// id_modalidade
+						stInsertSorteioReali.setInt(1, modalidade.getId());
+						
+						// num_concurso
+						stInsertSorteioReali.setInt(2, novoSorteio.getNumConcurso());
+						
+						// data
+						stInsertSorteioReali.setString(3, novoSorteio.getData());
+						
+						// numeros_sorteados
+						stInsertSorteioReali.setString(4, novoSorteio.getNumerosSorteados().toString().replaceAll("(\\[|\\])", ""));
+						
+						stInsertSorteioReali.addBatch();
+												
+						qtdeOperacoesLote++;
+						contadorSorteioAtual++;
+					}
+					
+					// Executa as operações que sobraram no lote
+					stInsertSorteioReali.executeBatch();
+					conexao.commit();
+					
+					// Atualiza as estatísticas dos números para este sorteio
+					
+					System.out.printf("  => OK\n");
+					System.out.printf("=> Atualizando as estatísticas dos números\n");
+					
+					qtdeOperacoesLote = 0;
+					contadorSorteioAtual = 1;
+					
+					for (SorteioArquivo novoSorteio : novosSorteios) {
+						
+						System.out.printf("  => Atualizando estatísticas a partir dos números do concurso %d, registro %d de %d\n", novoSorteio.getNumConcurso(), contadorSorteioAtual, qtdeSorteiosParaProcessar);
+						
+						// Para cada uns dos números da modalidade
+						
+						for (int numeroAtual = modalidade.getMinNumero(); numeroAtual <= modalidade.getMaxNumero(); numeroAtual++) {
+							
+							// Executa o lote de operações caso o mesmo tenha alcançado quantidade esperada 
+							if (qtdeOperacoesLote >= MAX_QTDE_OPERACOES_EM_LOTE) {
+								stInserirEstats.executeBatch();
+								stAtualizarEstats.executeBatch();
+								conexao.commit();
+							}
+							
+							// Variáveis auxiliares para guardar as estatisticas atuais
+							
+							Integer qtdeRepeticoes; 
+							Integer qtdeAtrasos; 
+							Boolean existeEstatistica = false;
+							
+							// Obtém a estatística atual do número
+							
+							stObterEstatsNumero.setInt(1, modalidade.getId());
+							stObterEstatsNumero.setInt(2, numeroAtual);
+							
+							ResultSet rsObterEstatsNumero = stObterEstatsNumero.executeQuery();
+							
+							// Se existe registro de estatísticas para o número
+							
+							if (rsObterEstatsNumero.next()) {
+								// Utiliza os dados já existentes
+								qtdeRepeticoes 		= rsObterEstatsNumero.getInt("qtde_repeticoes");
+								qtdeAtrasos 		= rsObterEstatsNumero.getInt("qtde_atrasos");
+								existeEstatistica 	= true;
+							}
+							else {
+								// Senão atribui valor 0
+								qtdeRepeticoes 	= 0;
+								qtdeAtrasos 	= 0;
+							}
+							
+							rsObterEstatsNumero.close();
+							
+							// Se o número apareceu no sorteio atual, contabiliza repetição e zera o atraso
+							
+							if (novoSorteio.getNumerosSorteados().contains(numeroAtual)) {
+								qtdeRepeticoes++;
+								qtdeAtrasos = 0;
+							}
+							else {
+								// Senão contabiliza atraso
+								qtdeAtrasos++;
+							}
+							
+							// Se existe o registro de estatística no banco 
+							
+							if (existeEstatistica) {
+								
+								// Atualiza os dados
+								
+								stAtualizarEstats.setInt(1, qtdeRepeticoes);
+								stAtualizarEstats.setInt(2, qtdeAtrasos);
+								stAtualizarEstats.setInt(3, modalidade.getId());
+								stAtualizarEstats.setInt(4, numeroAtual);
+								
+								stAtualizarEstats.addBatch();
+							}
+							else {
+								
+								// Senão cria um novo registro
+								
+								stInserirEstats.setInt(1, modalidade.getId());
+								stInserirEstats.setInt(2, numeroAtual);
+								stInserirEstats.setInt(3, qtdeRepeticoes);
+								stInserirEstats.setInt(4, qtdeAtrasos);
+								
+								stInserirEstats.addBatch();
+							}
+							
+							qtdeOperacoesLote++;
+						}
+						
+						contadorSorteioAtual++;
+					}
+					
+					// Executa as operações que sobraram no lote
+					stInserirEstats.executeBatch();
+					stAtualizarEstats.executeBatch();
+					conexao.commit();
 				}
 				else {
-					indInicio =+ 1;
+					System.out.printf("O banco de dados já está atualizado\n");
 				}
-				
-				// Insere os novos sorteios
-				
-				List<SorteioArquivo> novosSorteios = sorteiosArquivo.subList(indInicio, sorteiosArquivo.size());
-				
-				Integer ctRegInseridos = 0;
-				
-				for (SorteioArquivo novoSorteio : novosSorteios) {
-					
-					// id_modalidade
-					stInsertSorteioReali.setInt(1, modalidade.getId());
-					
-					// num_concurso
-					stInsertSorteioReali.setInt(2, novoSorteio.getNumConcurso());
-					
-					// data
-//					String data = new SimpleDateFormat("dd/MM/yyyy").format(novoSorteio.getData());
-					stInsertSorteioReali.setString(3, novoSorteio.getData());
-					
-					// numeros_sorteados
-					stInsertSorteioReali.setString(4, novoSorteio.getNumerosSorteados().toString().replaceAll("(\\[|\\])", ""));
-					
-					stInsertSorteioReali.executeUpdate();
-					
-					System.out.printf("  => %d registros inseridos de %d\r", ctRegInseridos, novosSorteios.size());
-				}
-				
-				System.out.printf("  => OK\n");
-				
-				// Atualização das estatísticas dos números
-
-				System.out.printf("=> Atualizando as estatísticas a partir dos sorteios\n");
-				
-				// Para cada sorteio realizado que ainda não existe na base de dados
-				
-				
-				
-				
 			}
-			else {
-				System.out.printf("O banco de dados já está atualizado\n");
+			catch (SQLException | IOException | ParseException e) {
+				conexao.rollback();
+				e.printStackTrace();
 			}
+		} 
+		catch (SQLException e1) {
+			e1.printStackTrace();
 		}
-    	catch (SQLException | IOException | ParseException e) {
-			e.printStackTrace();
-		}
+		
 	}
 	
 	private static List<SorteioArquivo> obterSorteiosDoArquivo(Modalidade modalidade, File arquivo) throws IOException, ParseException {
