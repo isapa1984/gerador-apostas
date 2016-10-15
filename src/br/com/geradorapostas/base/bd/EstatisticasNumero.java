@@ -41,38 +41,6 @@ public class EstatisticasNumero {
 		return estatisticasNumero;
 	}
 	
-	public static void inserirEstatistica(EstatisticasNumero novaEstatistica) {
-    	try (
-    		PreparedStatement stInserirEstats = GerenciadorConexaoBD.getConexao().prepareStatement(InstrucaoSQL.getInstrucao("estatisticas_numeros.insert.nova_estatistica"));
-        ) {
-			stInserirEstats.setInt(1, novaEstatistica.getModalidade().getId());
-			stInserirEstats.setInt(2, novaEstatistica.getNumero());
-			stInserirEstats.setInt(3, novaEstatistica.getQtdeRepeticoes());
-			stInserirEstats.setInt(4, novaEstatistica.getQtdeAtrasos());
-
-			stInserirEstats.executeUpdate();
-		}
-		catch (SQLException e) {
-			e.printStackTrace();
-		}
-	}
-	
-	public static void atualizarEstatistica(EstatisticasNumero novaEstatistica) {
-		try (
-			PreparedStatement stAtualizarEstats = GerenciadorConexaoBD.getConexao().prepareStatement(InstrucaoSQL.getInstrucao("estatisticas_numeros.update.estatistica"));
-		) {
-			stAtualizarEstats.setInt(1, novaEstatistica.getQtdeRepeticoes());
-			stAtualizarEstats.setInt(2, novaEstatistica.getQtdeAtrasos());
-			stAtualizarEstats.setInt(3, novaEstatistica.getModalidade().getId());
-			stAtualizarEstats.setInt(4, novaEstatistica.getNumero());
-			
-			stAtualizarEstats.executeUpdate();
-		}
-		catch (SQLException e) {
-			e.printStackTrace();
-		}
-	}
-
 	public Modalidade getModalidade() {
 		return modalidade;
 	}

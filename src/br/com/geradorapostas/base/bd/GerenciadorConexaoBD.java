@@ -16,7 +16,6 @@ public class GerenciadorConexaoBD {
 			
 			// Cria a conexao
 			conexao = DriverManager.getConnection("jdbc:sqlite:bd/gerados_apostas.db");
-			conexao.setAutoCommit(false);
 		} 
 		catch (ClassNotFoundException | SQLException e) {
 			e.printStackTrace();

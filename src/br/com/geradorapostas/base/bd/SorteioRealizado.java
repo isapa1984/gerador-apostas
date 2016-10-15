@@ -5,9 +5,6 @@
  */
 package br.com.geradorapostas.base.bd;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.Serializable;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -19,11 +16,6 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 
 /**
  *
@@ -113,90 +105,6 @@ public class SorteioRealizado implements Serializable {
 		}
         
         return sorteios;
-    }
-    
-    // Obtém os sorteios realizados para modalidade oriundos dos arquivos disponibilizados pela Caixa
-    
-    public static List<SorteioRealizado> obterSorteiosRealizados(Modalidade modalidade, File arquivo) {
-        
-        ArrayList<SorteioRealizado> sorteios = new ArrayList<>();
-        
-		try {
-			
-			if (arquivo.exists()) {
-				Document htmlDoc = Jsoup.parse(arquivo, null);
-				Elements trElements = htmlDoc.select("tr:has(td)");
-				
-				for (Element trElement : trElements) {
-					
-					Elements tdElements = trElement.children();
-					
-					if (tdElements.size() < 6) {
-						continue;
-					}
-					
-					Integer numConcurso 				= Integer.parseInt(tdElements.get(0).text());
-					Date dataRealizacao 				= new SimpleDateFormat("dd/MM/yyyy").parse(tdElements.get(1).text());
-					ArrayList<Integer> numerosSorteados = new ArrayList<>();
-					
-					for (int i = 1, j = 2; i <= modalidade.getQtdeMinMarcacao(); i++, j++) {
-						numerosSorteados.add(Integer.parseInt(tdElements.get(j).text()));
-					}
-					
-					sorteios.add(new SorteioRealizado(modalidade, numConcurso, dataRealizacao, numerosSorteados));
-				}
-			}
-			else {
-				throw new FileNotFoundException(String.format("Arquivo \"%s\" não encontrado!", arquivo.getName()));
-			}
-			
-		} catch (IOException | ParseException e) {
-			e.printStackTrace();
-		}
-        
-        return sorteios;
-    }
-    
-    // Insere uma lista de sorteios no banco de dados
-    
-    public static void inserirSorteios(List<SorteioRealizado> novosSorteios, Boolean mostrarAndamento) {
-    	try (
-    		PreparedStatement stInsertSorteioReali = GerenciadorConexaoBD.getConexao().prepareStatement(InstrucaoSQL.getInstrucao("sorteios_realizados.insert.novo_registro"));
-    	) {
-			
-    		Integer ctRegInseridos = 0;
-    		
-    		for (SorteioRealizado sorteioRealizado : novosSorteios) {
-				
-    			// id_modalidade
-				
-				stInsertSorteioReali.setInt(1, sorteioRealizado.getModalidade().getId());
-				
-				// num_concurso
-				
-				stInsertSorteioReali.setInt(2, sorteioRealizado.getNumConcurso());
-				
-				// data
-				
-				String data = new SimpleDateFormat("dd/MM/yyyy").format(sorteioRealizado.getData());
-				stInsertSorteioReali.setString(3, data);
-				
-				// numeros_sorteados
-				
-				stInsertSorteioReali.setString(4, sorteioRealizado.getNumerosSorteados().toString().replaceAll("(\\[|\\])", ""));
-				
-				stInsertSorteioReali.executeUpdate();
-				
-				if (mostrarAndamento) {
-					ctRegInseridos++;
-					System.out.printf("  => %d registros inseridos de %d\r", ctRegInseridos, novosSorteios.size());
-				}
-			}
-    		
-		} 
-    	catch (SQLException e) {
-			e.printStackTrace();
-		}
     }
     
     public Modalidade getModalidade() {
